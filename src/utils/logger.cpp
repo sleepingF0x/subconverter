@@ -5,7 +5,9 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "../handler/settings.h"
+#include "handler/settings.h"
+#include "defer.h"
+#include "lock.h"
 #include "logger.h"
 
 std::string getTime(int type)
@@ -24,7 +26,8 @@ std::string getTime(int type)
         format = "%Y%m%d-%H%M%S";
         break;
     case 2:
-        format = "%Y/%m/%d %a %H:%M:%S." + std::string(cMillis);
+        format = "%Y/%m/%d %a %H:%M:%S.";
+        format += cMillis;
         break;
     case 3:
     default:
@@ -38,7 +41,20 @@ std::string getTime(int type)
 static std::string get_thread_name()
 {
     static std::atomic_int counter = 0;
-    thread_local static std::string name = "Thread-" + std::to_string(counter++);
+    static std::map<std::thread::id, std::string> thread_names;
+    static RWLock lock;
+    std::thread::id id = std::this_thread::get_id();
+    lock.readLock();
+    if (thread_names.find(id) != thread_names.end())
+    {
+        defer(lock.readUnlock();)
+        return thread_names[id];
+    }
+    lock.readUnlock();
+    lock.writeLock();
+    std::string name = "Thread-" + std::to_string(++counter);
+    thread_names[id] = name;
+    lock.writeUnlock();
     return name;
 }
 

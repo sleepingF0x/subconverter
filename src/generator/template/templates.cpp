@@ -5,14 +5,14 @@
 #include <inja.hpp>
 #include <nlohmann/json.hpp>
 
-#include "../../handler/interfaces.h"
-#include "../../handler/settings.h"
-#include "../../handler/webget.h"
-#include "../../utils/logger.h"
-#include "../../utils/network.h"
-#include "../../utils/regexp.h"
-#include "../../utils/urlencode.h"
-#include "../../utils/yamlcpp_extra.h"
+#include "handler/interfaces.h"
+#include "handler/settings.h"
+#include "handler/webget.h"
+#include "utils/logger.h"
+#include "utils/network.h"
+#include "utils/regexp.h"
+#include "utils/urlencode.h"
+#include "utils/yamlcpp_extra.h"
 #include "templates.h"
 
 namespace inja
@@ -474,6 +474,8 @@ int renderClashScript(YAML::Node &base_rule, std::vector<RulesetContent> &rulese
                 else
                     rules.emplace_back("RULE-SET," + rule_name + "_ipcidr," + rule_group);
             }
+            if(!has_domain[rule_name] && !has_ipcidr[rule_name] && !script)
+                rules.emplace_back("RULE-SET," + rule_name + "," + rule_group);
             if(std::find(groups.begin(), groups.end(), rule_name) == groups.end())
                 groups.emplace_back(rule_name);
         }
